@@ -22,6 +22,16 @@ services:
       interval: 5s
       timeout: 5s
       retries: 1
-
+      
+  nats:
+    image: nats:latest
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    healthcheck:
+      test: ["CMD", "nats-server", "--help"]
+      interval: 5s
+      timeout: 5s
+      retries: 1
 volumes:
   db_data:
