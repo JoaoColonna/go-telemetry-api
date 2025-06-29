@@ -6,16 +6,22 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:15
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: spegEqEd*x-4IBUME?hE
+      POSTGRES_DB: telemetry
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d telemetry"]
+      interval: 5s
+      timeout: 5s
+      retries: 1
 
 volumes:
   db_data:
