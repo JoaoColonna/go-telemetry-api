@@ -2,19 +2,22 @@ package v1
 
 import (
 	"net/http"
+	"time"
 
 	"go-challenge/internal/models"
 	"go-challenge/internal/services"
+	"go-challenge/internal/messaging"
 
 	"github.com/gin-gonic/gin"
 )
 
 type TelemetryHandler struct {
-	Service *services.TelemetryService
+	Service      *services.TelemetryService
+	NATSProducer *messaging.NATSProducer
 }
 
-func NewTelemetryHandler(service *services.TelemetryService) *TelemetryHandler {
-	return &TelemetryHandler{Service: service}
+func NewTelemetryHandler(service *services.TelemetryService, natsProducer *messaging.NATSProducer) *TelemetryHandler {
+	return &TelemetryHandler{Service: service, NATSProducer: natsProducer}
 }
 
 // PostGyroscopeHandler godoc
@@ -123,5 +126,16 @@ func (h *TelemetryHandler) PostPhotoHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Photo data saved successfully"})
+	// Publica no NATS
+	photoMsg := messaging.PhotoMessage{
+		Photo:     imageData,
+		DeviceID:  file.Filename, // ou gere um UUID se preferir
+		Timestamp: time.Now().Unix(),
+	}
+	if err := h.NATSProducer.PublishPhoto(photoMsg); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to publish photo to queue"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Photo data saved and published successfully"})
 }

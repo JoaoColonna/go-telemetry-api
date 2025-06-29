@@ -2,15 +2,16 @@ package routes
 
 import (
 	v1 "go-challenge/api/v1"
+	"go-challenge/internal/messaging"
 	"go-challenge/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(service *services.TelemetryService) *gin.Engine {
+func SetupRouter(service *services.TelemetryService, nats *messaging.NATSProducer) *gin.Engine {
 	r := gin.Default()
 
-	handler := v1.NewTelemetryHandler(service)
+	handler := v1.NewTelemetryHandler(service, nats)
 
 	api := r.Group("/telemetry")
 	{
